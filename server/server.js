@@ -1,7 +1,9 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import connectDB from "./configs/mongodb.js";
+
+dotenv.config();
 
 // app config
 const PORT = process.env.PORT || 4000 ;
