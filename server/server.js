@@ -2,11 +2,12 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import connectDB from "./configs/mongodb.js";
+import userRouter from "./routes/userRoutes.js";
 
 dotenv.config();
 
 // app config
-const PORT = process.env.PORT || 4000 ;
+const PORT = process.env.PORT || 4000;
 const app = express();
 await connectDB();
 
@@ -18,5 +19,7 @@ app.use(cors());
 app.get("/", (req, res) => {
   res.send("API working");
 });
+
+app.use("/api/user", userRouter);
 
 app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
