@@ -4,25 +4,36 @@ import cors from "cors";
 import connectDB from "./configs/mongodb.js";
 import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/ImageRoutes.js";
+import bodyParser from "body-parser";
 
 dotenv.config();
 
-// app config
-const PORT = process.env.PORT || 4000;
-const app = express();
-await connectDB();
+const startServer = async () => {
+  // app config
+  const PORT = process.env.PORT || 4000;
+  const app = express();
 
-// Initialize middleware
-app.use(express.json());
-app.use(cors());
+  // Connect to the database
+  await connectDB();
 
-// api routes
-app.get("/", (req, res) => {
-  res.send("API working");
-});
+  // Needed only for webhook route to handle raw body verification
+  app.use("/api/user/webhook", bodyParser.raw({ type: "*/*" }));
 
-app.use("/api/user", userRouter);
+  // Initialize middleware
+  app.use(express.json());
+  app.use(cors());
 
-app.use('/api/image',imageRouter);
+  // API routes
+  app.get("/", (req, res) => {
+    res.send("API working");
+  });
 
-app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
+  app.use("/api/user", userRouter);
+  app.use('/api/image', imageRouter);
+
+  // Start the server
+  app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
+};
+
+// Call the startServer function
+startServer();

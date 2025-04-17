@@ -1,162 +1,154 @@
 import { Webhook } from "svix";
 import userModel from "../models/userModel.js";
-import razorpay from "razorpay";
+import Razorpay from "razorpay";
 import transactionModel from "../models/transactionModel.js";
+
+const razorpayInstance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 
 const clerkWebhooks = async (req, res) => {
   try {
-    const whook = new Webhook(process.env.CLERK_WEBHOOK_SECCRET);
-    await whook.verify(JSON.stringify(req, res), {
+    const payload = req.body;
+    const headers = {
       "svix-id": req.headers["svix-id"],
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
-    });
-    const { data, type } = req.body;
+    };
+
+    const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+    const evt = webhook.verify(payload, headers);
+    const { data, type } = evt;
 
     switch (type) {
-      case "user.created": {
-        const userData = {
+      case "user.created":
+        await userModel.create({
           clerkId: data.id,
           email: data.email_addresses[0].email_address,
           firstName: data.first_name,
           lastName: data.last_name,
           photo: data.image_url,
-        };
-        await userModel.create(userData);
-        res.json({});
+        });
         break;
-      }
 
-      case "user.updated": {
-        const userData = {
-          email: data.email_addresses[0].email_address,
-          firstName: data.first_name,
-          lastName: data.last_name,
-          photo: data.image_url,
-        };
-        await userModel.findOneAndUpdate({ clerkId: data.id }, userData);
-        res.json({});
+      case "user.updated":
+        await userModel.findOneAndUpdate(
+          { clerkId: data.id },
+          {
+            email: data.email_addresses[0].email_address,
+            firstName: data.first_name,
+            lastName: data.last_name,
+            photo: data.image_url,
+          }
+        );
         break;
-      }
 
-      case "user.deleted": {
-        await userModel.findByIdAndDelete({ clerkId: data.id });
-        res.json({});
+      case "user.deleted":
+        await userModel.findOneAndDelete({ clerkId: data.id });
         break;
-      }
 
       default:
         break;
     }
+
+    res.json({ success: true });
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    console.log("Webhook Error:", error.message);
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
 const userCredits = async (req, res) => {
   try {
     const { clerkId } = req.body;
-    const userData = await userModel.findOne({ clerkId });
-    res.json({ success: true, credits: userData.creditBalance });
+    const user = await userModel.findOne({ clerkId });
+    res.json({ success: true, credits: user?.creditBalance || 0 });
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-const razorpayInstance = new razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 const paymentRazorpay = async (req, res) => {
   try {
     const { clerkId, planId } = req.body;
-    const userData = await userModel.findOne({ clerkId });
+    const user = await userModel.findOne({ clerkId });
 
-    if (!userData || planId) {
-      return res.json({ success: false, message: "Invalid Credentials" });
+    if (!user || !planId) {
+      return res.json({ success: false, message: "Invalid credentials" });
     }
 
-    let credits, plan, amount, date;
-
+    let credits, amount, plan;
     switch (planId) {
       case "Basic":
-        plan = "Basic";
         credits = 100;
         amount = 10;
+        plan = "Basic";
         break;
-
       case "Advanced":
-        plan = "Advanced";
         credits = 500;
         amount = 50;
+        plan = "Advanced";
         break;
-
       case "Business":
-        plan = "Business";
         credits = 5000;
         amount = 250;
+        plan = "Business";
         break;
-
       default:
-        break;
+        return res.json({ success: false, message: "Invalid plan" });
     }
-    date = Date.now();
 
-    const transactionData = {
+    const transaction = await transactionModel.create({
       clerkId,
       plan,
-      amount,
       credits,
-      date,
-    };
-    const newTransaction = await transactionModel.create(transactionData);
+      amount,
+      date: Date.now(),
+    });
 
     const options = {
       amount: amount * 100,
       currency: process.env.CURRENCY,
-      receipt: newTransaction._id,
+      receipt: transaction._id.toString(),
     };
-    await razorpayInstance.orders.create(options, (error, order) => {
+
+    razorpayInstance.orders.create(options, (error, order) => {
       if (error) {
-        return res.json({ success: false, message: error });
+        return res.status(500).json({ success: false, message: error.message });
       }
       res.json({ success: true, order });
     });
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 const verifyRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id } = req.body;
-    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+    const order = await razorpayInstance.orders.fetch(razorpay_order_id);
+    const transaction = await transactionModel.findById(order.receipt);
 
-    if (orderInfo.status === "paid") {
-      const transactionData = await transactionModel.findById(
-        orderInfo.receipt
-      );
-      if (transactionData.payment) {
-        return res.json({ success: false, message: "payment failed" });
-      }
-      const userData = await userModel.findOne({
-        clerkId: transactionData.clerkId,
+    if (!transaction || transaction.payment) {
+      return res.json({
+        success: false,
+        message: "Invalid or duplicate transaction",
       });
-      const creditBalance = userData.creditBalance + transactionData.credits;
-      await userModel.findByIdAndUpdate(userData._id, { creditBalance });
-
-      await transactionModel.findByIdAndUpdate(transactionData._id, {
-        payment: true,
-      });
-
-      res.json({ success: true, message: "Credits Added" });
     }
+
+    const user = await userModel.findOne({ clerkId: transaction.clerkId });
+    user.creditBalance += transaction.credits;
+    await user.save();
+
+    transaction.payment = true;
+    await transaction.save();
+
+    res.json({ success: true, message: "Credits added successfully" });
   } catch (error) {
-    console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export { clerkWebhooks, userCredits, paymentRazorpay, verifyRazorpay };

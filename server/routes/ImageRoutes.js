@@ -1,7 +1,7 @@
 import express from "express";
-import { removeBgImage } from "../controllers/ImageController";
-import upload from "../middleware/multer";
-import authUser from "../middleware/auth";
+import { removeBgImage } from "../controllers/ImageController.js";
+import upload from "../middleware/multer.js";
+import authUser from "../middleware/auth.js";
 
 const imageRouter = express.Router();
 
