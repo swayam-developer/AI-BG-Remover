@@ -6,14 +6,14 @@ import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/ImageRoutes.js";
 import bodyParser from "body-parser";
 
-dotenv.config();
+dotenv.config(); // Load .env file
 
 const startServer = async () => {
   // app config
   const PORT = process.env.PORT || 4000;
   const app = express();
 
-  // Connect to the database
+  // Connect to the database using MONGODB_URI
   await connectDB();
 
   // Needed only for webhook route to handle raw body verification

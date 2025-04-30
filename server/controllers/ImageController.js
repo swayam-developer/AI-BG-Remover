@@ -5,11 +5,11 @@ import userModel from "../models/userModel.js";
 
 const removeBgImage = async (req, res) => {
   try {
-    const { clerId } = req.body;
+    const { clerkId } = req.body; // Fixed typo
     const user = await userModel.findOne({ clerkId });
 
     if (!user) {
-      return res.json({ success: false, message: "user not found" });
+      return res.json({ success: false, message: "User not found" });
     }
     if (user.creditBalance === 0) {
       return res.json({
@@ -17,6 +17,10 @@ const removeBgImage = async (req, res) => {
         message: "No Credit Balance",
         creditBalance: user.creditBalance,
       });
+    }
+
+    if (!req.file) {
+      return res.json({ success: false, message: "No file uploaded" });
     }
 
     const imagePath = req.file.path;

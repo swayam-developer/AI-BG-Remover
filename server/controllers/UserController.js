@@ -24,34 +24,43 @@ const clerkWebhooks = async (req, res) => {
     const evt = webhook.verify(payload, headers);
     const { data, type } = evt;
 
+    if (!data || !data.id || !data.email_addresses || !data.image_url) {
+      console.log("Invalid webhook payload:", data);
+      return res.status(400).json({ success: false, message: "Invalid payload" });
+    }
+
     switch (type) {
       case "user.created":
         await userModel.create({
           clerkId: data.id,
-          email: data.email_addresses[0].email_address,
+          email: data.email_addresses[0]?.email_address,
           firstName: data.first_name,
           lastName: data.last_name,
           photo: data.image_url,
         });
+        console.log("User created:", data.id);
         break;
 
       case "user.updated":
         await userModel.findOneAndUpdate(
           { clerkId: data.id },
           {
-            email: data.email_addresses[0].email_address,
+            email: data.email_addresses[0]?.email_address,
             firstName: data.first_name,
             lastName: data.last_name,
             photo: data.image_url,
           }
         );
+        console.log("User updated:", data.id);
         break;
 
       case "user.deleted":
         await userModel.findOneAndDelete({ clerkId: data.id });
+        console.log("User deleted:", data.id);
         break;
 
       default:
+        console.log("Unhandled webhook event type:", type);
         break;
     }
 

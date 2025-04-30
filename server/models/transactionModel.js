@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const transactionSchema = new mongoose.Schema({
-  clearkId: { type: String, required: true },
+  clerkId: { type: String, required: true }, // Fixed typo
   plan: { type: String, required: true },
   amount: { type: Number, required: true },
   credits: { type: Number, required: true },
