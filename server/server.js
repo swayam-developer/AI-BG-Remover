@@ -16,12 +16,12 @@ const startServer = async () => {
   // Connect to the database using MONGODB_URI
   await connectDB();
 
+  // Initialize middleware
+  app.use(express.json()); // Ensure JSON payloads are parsed
+  app.use(cors());
+
   // Needed only for webhook route to handle raw body verification
   app.use("/api/user/webhook", bodyParser.raw({ type: "*/*" }));
-
-  // Initialize middleware
-  app.use(express.json());
-  app.use(cors());
 
   // API routes
   app.get("/", (req, res) => {
@@ -29,7 +29,7 @@ const startServer = async () => {
   });
 
   app.use("/api/user", userRouter);
-  app.use('/api/image', imageRouter);
+  app.use("/api/image", imageRouter);
 
   // Start the server
   app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
