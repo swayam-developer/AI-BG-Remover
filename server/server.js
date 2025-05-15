@@ -5,6 +5,7 @@ import connectDB from "./configs/mongodb.js";
 import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/ImageRoutes.js";
 import bodyParser from "body-parser";
+import mongoose from "mongoose";
 
 dotenv.config(); // Load .env file
 
@@ -37,3 +38,9 @@ const startServer = async () => {
 
 // Call the startServer function
 startServer();
+
+mongoose.connect(process.env.MONGODB_URI, {
+  // Removed deprecated options
+})
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Failed to connect to the database:", err));
