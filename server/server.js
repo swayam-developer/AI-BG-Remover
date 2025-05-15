@@ -39,8 +39,6 @@ const startServer = async () => {
 // Call the startServer function
 startServer();
 
-mongoose.connect(process.env.MONGODB_URI, {
-  // Removed deprecated options
-})
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Failed to connect to the database:", err));
