@@ -24,6 +24,9 @@ const clerkWebhooks = async (req, res) => {
     const evt = webhook.verify(payload, headers);
     const { data, type } = evt;
 
+    // Debugging logs to inspect the payload
+    console.log("Webhook payload data:", data);
+
     if (!data || !data.id || !data.email_addresses || !data.image_url) {
       console.log("Invalid webhook payload:", data);
       return res.status(400).json({ success: false, message: "Invalid payload" });
@@ -34,8 +37,8 @@ const clerkWebhooks = async (req, res) => {
         await userModel.create({
           clerkId: data.id,
           email: data.email_addresses[0]?.email_address,
-          firstName: data.first_name,
-          lastName: data.last_name,
+          firstName: data.first_name, // Ensure this field exists in the payload
+          lastName: data.last_name,   // Ensure this field exists in the payload
           photo: data.image_url,
         });
         console.log("User created:", data.id);
@@ -162,4 +165,17 @@ const verifyRazorpay = async (req, res) => {
   }
 };
 
-export { clerkWebhooks, userCredits, paymentRazorpay, verifyRazorpay };
+const someFunction = async (req, res) => {
+  try {
+    const { token } = req.body || {}; // Safely destructure token
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+    // ...existing code...
+  } catch (error) {
+    console.log("Error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export { clerkWebhooks, userCredits, paymentRazorpay, verifyRazorpay, someFunction };

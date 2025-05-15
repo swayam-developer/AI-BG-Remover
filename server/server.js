@@ -13,11 +13,13 @@ const startServer = async () => {
   const PORT = process.env.PORT || 4000;
   const app = express();
 
+  // Initialize middleware
+  app.use(express.json()); // Ensure JSON payloads are parsed
+
   // Connect to the database using MONGODB_URI
   await connectDB();
 
   // Initialize middleware
-  app.use(express.json()); // Ensure JSON payloads are parsed
   app.use(cors());
 
   // Needed only for webhook route to handle raw body verification
