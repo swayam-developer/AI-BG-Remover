@@ -71,7 +71,8 @@ const upsertUserOnLogin = async (req, res) => {
 // Get user credits (auth required)
 const userCredits = async (req, res) => {
   try {
-    const { clerkId } = req.body;
+    // Accept clerkId from either req.body or req.clerkId (set by auth middleware)
+    const clerkId = req.body.clerkId || req.clerkId;
     if (!clerkId) return res.status(400).json({ success: false, message: "clerkId required" });
     const user = await userModel.findOne({ clerkId });
     res.json({ success: true, credits: user?.creditBalance || 0 });
