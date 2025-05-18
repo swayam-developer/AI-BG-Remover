@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema({
 });
 
 const transactionModel =
-  mongoose.models.transactions ||
-  mongoose.model("transactions", transactionSchema);
+  mongoose.models.transaction ||
+  mongoose.model("transaction", transactionSchema);
 
 export default transactionModel;
