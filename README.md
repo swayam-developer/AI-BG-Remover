@@ -53,7 +53,7 @@ bg-remover/
 ### 1. Clone the repository
 
 ```sh
-git clone https://github.com/yourusername/bg-remover.git
+git clone https://github.com/swayam-developer/bg-remover.git
 cd bg-remover
 ```
 
