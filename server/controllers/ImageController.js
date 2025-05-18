@@ -5,7 +5,7 @@ import userModel from "../models/userModel.js";
 
 const removeBgImage = async (req, res) => {
   try {
-    const { clerkId } = req.body; // Fixed typo
+    const { clerkId } = req.body;
     const user = await userModel.findOne({ clerkId });
 
     if (!user) {
@@ -24,7 +24,6 @@ const removeBgImage = async (req, res) => {
     }
 
     const imagePath = req.file.path;
-
     const imageFile = fs.createReadStream(imagePath);
 
     const formdata = new FormData();
@@ -52,7 +51,6 @@ const removeBgImage = async (req, res) => {
       message: "Background Removed",
     });
   } catch (error) {
-    console.log(error.message);
     res.json({ success: false, message: error.message });
   }
 };

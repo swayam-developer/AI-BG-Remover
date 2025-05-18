@@ -6,37 +6,23 @@ import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/ImageRoutes.js";
 import bodyParser from "body-parser";
 
-dotenv.config(); // Load .env file
+dotenv.config();
 
-const startServer = async () => {
-  // app config
-  const PORT = process.env.PORT || 4000;
-  const app = express();
+const app = express();
+const PORT = process.env.PORT || 4000;
 
-  // Initialize middleware
-  app.use(express.json()); // Ensure JSON payloads are parsed
+// Clerk webhook: must use raw body
+app.use("/api/user/webhooks", bodyParser.raw({ type: "*/*" }));
 
-  // Connect to the database using MONGODB_URI
-  await connectDB();
+app.use(express.json());
+app.use(cors());
 
-  // Initialize middleware
-  app.use(cors());
+await connectDB();
 
-  // Needed only for webhook route to handle raw body verification
-  app.use("/api/user/webhook", bodyParser.raw({ type: "*/*" }));
+app.get("/", (req, res) => res.send("API working"));
 
-  // API routes
-  app.get("/", (req, res) => {
-    res.send("API working");
-  });
+app.use("/api/user", userRouter);
+app.use("/api/image", imageRouter);
 
-  app.use("/api/user", userRouter);
-  app.use("/api/image", imageRouter);
-
-  // Start the server
-  app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
-};
-
-// Call the startServer function
-startServer();
+app.listen(PORT, () => console.log("Server is Running on PORT " + PORT));
 
