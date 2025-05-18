@@ -3,3 +3,34 @@ node_modules
 .env
 .DS_Store
 .vercel
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Build output
+dist
+build
+coverage
+
+# IDE files
+.vscode
+.idea
+
+# Environment files
+.env
+.env.* # ignore all env files
+
+# Misc
+*.local
+*.sublime-workspace
+*.sublime-project
