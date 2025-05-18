@@ -28,7 +28,8 @@ coverage
 
 # Environment files
 .env
-.env.* # ignore all env files
+.env.*
+server/.env
 
 # Misc
 *.local
